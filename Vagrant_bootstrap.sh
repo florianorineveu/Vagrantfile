@@ -17,7 +17,7 @@ sed -i "s/deb-src http:\/\/deb.debian.org\/debian jessie-updates main*/#deb-src 
 
 apt-get update
 apt-get upgrade -y
-apt-get install -y apt-transport-https lsb-release ca-certificates software-properties-common curl ntp dirmngr
+apt-get install -y apt-transport-https lsb-release ca-certificates software-properties-common curl ntp dirmngr wget
 
 # ---------------------------------------
 #          Apache Setup
@@ -85,3 +85,50 @@ sed -i "s/.*;opcache.max_accelerated_files.*/opcache.max_accelerated_files=2000/
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 service apache2 restart
 
+# ---------------------------------------
+#          MySQL Setup
+# ---------------------------------------
+echo "---------------------------------------"
+echo "Installing RDBMS"
+echo "---------------------------------------"
+wget https://dev.mysql.com/get/mysql-apt-config_0.8.14-1_all.deb
+debconf-set-selections <<< 'mysql-community-server mysql-community-server/root-pass     password root'
+debconf-set-selections <<< 'mysql-community-server mysql-community-server/re-root-pass  password root'
+debconf-set-selections <<< 'mysql-community-server mysql-server/default-auth-override   select   Use Legacy Authentication Method (Retain MySQL 5.x Compatibility)'
+
+dpkg -i mysql-apt-config_0.8.14-1_all.deb
+
+apt-get update
+apt-get install -y mysql-server
+
+sed -i "s/.*bind-address.*/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
+mysql -uroot -proot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root';"
+
+service mysql restart
+
+# ---------------------------------------
+#          Tools Setup
+# ---------------------------------------
+echo "---------------------------------------"
+echo "Installing various tools"
+echo "---------------------------------------"
+apt-get install -y --no-install-recommends vim ntp zip unzip openssl build-essential libssl-dev libxrender-dev libx11-dev libxext-dev libfontconfig1-dev libfreetype6-dev fontconfig
+
+apt-get autoremove
+
+# ---------------------------------------
+#          Front Setup
+# ---------------------------------------
+echo "---------------------------------------"
+echo "Installing front tools"
+echo "---------------------------------------"
+curl -sL https://deb.nodesource.com/setup_10.x | bash -
+
+apt-get install -y nodejs
+curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+apt-get update && apt-get install yarn
+
+echo -e "\n\n---------------------------------------"
+echo "Project installed ! Ready to work !"
+echo "---------------------------------------"
