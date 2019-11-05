@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+DB_PASSWORD='root'
+PROJECT_FOLDER=$1
+
 # ---------------------------------------
 #          Virtual Machine Setup
 # ---------------------------------------
@@ -29,14 +32,14 @@ echo "---------------------------------------"
 apt-get install -y apache2
 a2enmod rewrite
 
-touch /etc/apache2/sites-available/fnev.devlocal.conf
+touch /etc/apache2/sites-available/$PROJECT_FOLDER.conf
 
 VHOST=$(cat <<EOF
 <VirtualHost *:80>
-    ServerName fnev.devlocal
+    ServerName ${PROJECT_FOLDER}
     DirectoryIndex index.php
-    DocumentRoot /home/vagrant/fnev.eu/public
-    <Directory /home/vagrant/fnev.eu/public>
+    DocumentRoot "/home/vagrant/${PROJECT_FOLDER}/public"
+    <Directory "/home/vagrant/${PROJECT_FOLDER}/public">
         AllowOverride None
         Order Allow,Deny
         Allow from All
@@ -49,18 +52,18 @@ VHOST=$(cat <<EOF
             RewriteRule ^(.*)$ index.php [QSA,L]
         </IfModule>
     </Directory>
-    <Directory /home/vagrant/fnev.eu/public/build>
+    <Directory "/home/vagrant/${PROJECT_FOLDER}/public/build">
         <IfModule mod_rewrite.c>
             RewriteEngine Off
         </IfModule>
     </Directory>
-    ErrorLog /var/log/apache2/fnev_eu_error.log
-    CustomLog /var/log/apache2/fnev_eu_access.log combined
+    ErrorLog "/var/log/apache2/${PROJECT_FOLDER}_error.log"
+    CustomLog "/var/log/apache2/${PROJECT_FOLDER}_access.log" combined
 </VirtualHost>
 EOF
 )
-echo "${VHOST}" > /etc/apache2/sites-available/fnev.devlocal.conf
-ln -s /etc/apache2/sites-available/fnev.devlocal.conf /etc/apache2/sites-enabled/fnev.devlocal.conf
+echo "${VHOST}" > /etc/apache2/sites-available/$PROJECT_FOLDER.conf
+ln -s /etc/apache2/sites-available/$PROJECT_FOLDER.conf /etc/apache2/sites-enabled/$PROJECT_FOLDER.conf
 
 # ---------------------------------------
 #          PHP Setup
@@ -92,11 +95,12 @@ echo "---------------------------------------"
 echo "Installing RDBMS"
 echo "---------------------------------------"
 wget https://dev.mysql.com/get/mysql-apt-config_0.8.14-1_all.deb
-debconf-set-selections <<< 'mysql-community-server mysql-community-server/root-pass     password root'
-debconf-set-selections <<< 'mysql-community-server mysql-community-server/re-root-pass  password root'
-debconf-set-selections <<< 'mysql-community-server mysql-server/default-auth-override   select   Use Legacy Authentication Method (Retain MySQL 5.x Compatibility)'
+debconf-set-selections <<< "mysql-community-server mysql-community-server/root-pass password $DB_PASSWORD"
+debconf-set-selections <<< "mysql-community-server mysql-community-server/re-root-pass password $DB_PASSWORD"
+debconf-set-selections <<< "mysql-community-server mysql-server/default-auth-override select Use Legacy Authentication Method (Retain MySQL 5.x Compatibility)"
 
 dpkg -i mysql-apt-config_0.8.14-1_all.deb
+rm -rf mysql-apt-config_0.8.14-1_all.deb
 
 apt-get update
 apt-get install -y mysql-server
@@ -128,6 +132,10 @@ apt-get install -y nodejs
 curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 apt-get update && apt-get install yarn
+
+
+mkdir -p /var/dev/$PROJECT_FOLDER
+chown -R vagrant: /var/dev
 
 echo -e "\n\n---------------------------------------"
 echo "Project installed ! Ready to work !"
