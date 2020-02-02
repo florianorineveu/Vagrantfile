@@ -2,6 +2,7 @@
 
 DB_PASSWORD='root'
 PROJECT_FOLDER=$1
+PROJECT_DOMAIN=$2
 
 # ---------------------------------------
 #          Virtual Machine Setup
@@ -36,7 +37,7 @@ touch /etc/apache2/sites-available/$PROJECT_FOLDER.conf
 
 VHOST=$(cat <<EOF
 <VirtualHost *:80>
-    ServerName ${PROJECT_FOLDER}
+    ServerName ${PROJECT_DOMAIN}
     DirectoryIndex index.php
     DocumentRoot "/home/vagrant/${PROJECT_FOLDER}/public"
     <Directory "/home/vagrant/${PROJECT_FOLDER}/public">
