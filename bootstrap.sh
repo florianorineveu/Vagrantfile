@@ -127,7 +127,7 @@ apt-get autoremove
 echo "---------------------------------------"
 echo "Installing front tools"
 echo "---------------------------------------"
-curl -sL https://deb.nodesource.com/setup_10.x | bash -
+curl -sL https://deb.nodesource.com/setup_12.x | bash -
 
 apt-get install -y nodejs
 curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
